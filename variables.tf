@@ -34,8 +34,8 @@ variable "iam_path" {
   default     = "/"
 
   validation {
-    condition     = can(regex("^/.*/$", var.iam_path))
-    error_message = "iam_path must start and end with '/'."
+    condition     = can(regex("^/([^/]+/)*$", var.iam_path))
+    error_message = "iam_path must be '/' or use slash-delimited path segments like '/team/service/'."
   }
 }
 
