@@ -7,7 +7,9 @@ provider "aws" {
 module "iam_roles" {
   source = "../../"
 
-  name_prefix = var.name_prefix
+  project_name = var.project_name
+  environment  = var.environment
+  name_prefix  = var.name_prefix
 
   create_ec2_role            = true
   create_rds_monitoring_role = true
@@ -15,7 +17,7 @@ module "iam_roles" {
   lambda_vpc_access          = true
   create_alb_logs_role       = true
   create_s3_app_policy       = true
-  s3_bucket_name             = "your-s3-bucket-name"
+  s3_bucket_arn              = "arn:aws:s3:::your-s3-bucket-name"
   s3_app_prefix              = "app-data"
   create_cross_account_role  = true
   trusted_account_arns       = ["arn:aws:iam::123456789012:root"]

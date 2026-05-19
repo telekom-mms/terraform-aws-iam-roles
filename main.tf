@@ -6,9 +6,11 @@ data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 # EC2 Instance Role for Web/App Tier
+# PSA Compliance: Req 1 (least privilege access)
 resource "aws_iam_role" "ec2_instance_role" {
   count                = var.create_ec2_role ? 1 : 0
-  name                 = "${var.name_prefix}-ec2-instance-role"
+  name                 = "${local.name_prefix}-ec2-instance-role"
+  path                 = var.iam_path
   permissions_boundary = var.permissions_boundary
 
   assume_role_policy = jsonencode({
@@ -24,8 +26,8 @@ resource "aws_iam_role" "ec2_instance_role" {
     ]
   })
 
-  tags = merge(var.tags, {
-    "Name"          = "${var.name_prefix}-ec2-instance-role"
+  tags = merge(local.common_tags, {
+    "Name"          = "${local.name_prefix}-ec2-instance-role"
     "Purpose"       = "EC2 Instance Role"
     "PSA-Compliant" = "true"
   })
@@ -33,19 +35,23 @@ resource "aws_iam_role" "ec2_instance_role" {
 
 resource "aws_iam_instance_profile" "ec2_instance_profile" {
   count = var.create_ec2_role ? 1 : 0
-  name  = "${var.name_prefix}-ec2-instance-profile"
+  name  = "${local.name_prefix}-ec2-instance-profile"
+  path  = var.iam_path
   role  = aws_iam_role.ec2_instance_role[0].name
 
-  tags = merge(var.tags, {
-    "Name"          = "${var.name_prefix}-ec2-instance-profile"
+  tags = merge(local.common_tags, {
+    "Name"          = "${local.name_prefix}-ec2-instance-profile"
+    "Purpose"       = "EC2 Instance Profile"
     "PSA-Compliant" = "true"
   })
 }
 
 # CloudWatch Logs Policy for EC2 (PSA Req 3.66-05: Logging obligatory)
+# PSA Compliance: Req 1 (least privilege access)
 resource "aws_iam_policy" "cloudwatch_logs_policy" {
   count = var.create_ec2_role ? 1 : 0
-  name  = "${var.name_prefix}-cloudwatch-logs-policy"
+  name  = "${local.name_prefix}-cloudwatch-logs-policy"
+  path  = var.iam_path
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -58,7 +64,7 @@ resource "aws_iam_policy" "cloudwatch_logs_policy" {
           "logs:DescribeLogStreams"
         ]
         # PSA Compliance: Restricted to specific log groups
-        Resource = "arn:aws:logs:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:log-group:/aws/ec2/${var.name_prefix}-*:*"
+        Resource = "arn:aws:logs:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:log-group:/aws/ec2/${local.name_prefix}-*:*"
       },
       {
         Effect = "Allow"
@@ -70,8 +76,9 @@ resource "aws_iam_policy" "cloudwatch_logs_policy" {
     ]
   })
 
-  tags = merge(var.tags, {
-    "Name"          = "${var.name_prefix}-cloudwatch-logs-policy"
+  tags = merge(local.common_tags, {
+    "Name"          = "${local.name_prefix}-cloudwatch-logs-policy"
+    "Purpose"       = "Scoped CloudWatch logging"
     "PSA-Compliant" = "true"
   })
 }
@@ -83,9 +90,11 @@ resource "aws_iam_role_policy_attachment" "ec2_cloudwatch_logs" {
 }
 
 # RDS Role for enhanced monitoring
+# PSA Compliance: Req 1 (least privilege access)
 resource "aws_iam_role" "rds_monitoring_role" {
   count                = var.create_rds_monitoring_role ? 1 : 0
-  name                 = "${var.name_prefix}-rds-monitoring-role"
+  name                 = "${local.name_prefix}-rds-monitoring-role"
+  path                 = var.iam_path
   permissions_boundary = var.permissions_boundary
 
   assume_role_policy = jsonencode({
@@ -101,8 +110,8 @@ resource "aws_iam_role" "rds_monitoring_role" {
     ]
   })
 
-  tags = merge(var.tags, {
-    "Name"          = "${var.name_prefix}-rds-monitoring-role"
+  tags = merge(local.common_tags, {
+    "Name"          = "${local.name_prefix}-rds-monitoring-role"
     "Purpose"       = "RDS Enhanced Monitoring"
     "PSA-Compliant" = "true"
   })
@@ -115,9 +124,11 @@ resource "aws_iam_role_policy_attachment" "rds_monitoring" {
 }
 
 # Lambda Execution Role
+# PSA Compliance: Req 1 (least privilege access)
 resource "aws_iam_role" "lambda_execution_role" {
   count                = var.create_lambda_role ? 1 : 0
-  name                 = "${var.name_prefix}-lambda-execution-role"
+  name                 = "${local.name_prefix}-lambda-execution-role"
+  path                 = var.iam_path
   permissions_boundary = var.permissions_boundary
 
   assume_role_policy = jsonencode({
@@ -133,8 +144,8 @@ resource "aws_iam_role" "lambda_execution_role" {
     ]
   })
 
-  tags = merge(var.tags, {
-    "Name"          = "${var.name_prefix}-lambda-execution-role"
+  tags = merge(local.common_tags, {
+    "Name"          = "${local.name_prefix}-lambda-execution-role"
     "Purpose"       = "Lambda Execution"
     "PSA-Compliant" = "true"
   })
@@ -153,9 +164,11 @@ resource "aws_iam_role_policy_attachment" "lambda_vpc_execution" {
 }
 
 # Application Load Balancer Logs Role (S3 Log Delivery)
+# PSA Compliance: Req 1 (least privilege access)
 resource "aws_iam_role" "alb_logs_role" {
   count                = var.create_alb_logs_role ? 1 : 0
-  name                 = "${var.name_prefix}-alb-logs-role"
+  name                 = "${local.name_prefix}-alb-logs-role"
+  path                 = var.iam_path
   permissions_boundary = var.permissions_boundary
 
   assume_role_policy = jsonencode({
@@ -171,17 +184,19 @@ resource "aws_iam_role" "alb_logs_role" {
     ]
   })
 
-  tags = merge(var.tags, {
-    "Name"          = "${var.name_prefix}-alb-logs-role"
+  tags = merge(local.common_tags, {
+    "Name"          = "${local.name_prefix}-alb-logs-role"
     "Purpose"       = "ALB Access Logs Delivery"
     "PSA-Compliant" = "true"
   })
 }
 
 # S3 Bucket Policy for Application Data (PSA Compliance: Least Privilege)
+# PSA Compliance: Req 1 (least privilege access)
 resource "aws_iam_policy" "s3_app_data_policy" {
   count = var.create_s3_app_policy ? 1 : 0
-  name  = "${var.name_prefix}-s3-app-data-policy"
+  name  = "${local.name_prefix}-s3-app-data-policy"
+  path  = var.iam_path
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -208,8 +223,9 @@ resource "aws_iam_policy" "s3_app_data_policy" {
     ]
   })
 
-  tags = merge(var.tags, {
-    "Name"          = "${var.name_prefix}-s3-app-data-policy"
+  tags = merge(local.common_tags, {
+    "Name"          = "${local.name_prefix}-s3-app-data-policy"
+    "Purpose"       = "Scoped application data access"
     "PSA-Compliant" = "true"
   })
 }
@@ -221,9 +237,11 @@ resource "aws_iam_role_policy_attachment" "ec2_s3_app_data" {
 }
 
 # Cross-Account Role (PSA Req 3.69: MFA and RBAC mandatory)
+# PSA Compliance: Req 1 (least privilege access)
 resource "aws_iam_role" "cross_account_role" {
   count                = var.create_cross_account_role ? 1 : 0
-  name                 = "${var.name_prefix}-cross-account-role"
+  name                 = "${local.name_prefix}-cross-account-role"
+  path                 = var.iam_path
   permissions_boundary = var.permissions_boundary
 
   assume_role_policy = jsonencode({
@@ -247,8 +265,8 @@ resource "aws_iam_role" "cross_account_role" {
     ]
   })
 
-  tags = merge(var.tags, {
-    "Name"          = "${var.name_prefix}-cross-account-role"
+  tags = merge(local.common_tags, {
+    "Name"          = "${local.name_prefix}-cross-account-role"
     "Purpose"       = "Cross-Account Access"
     "PSA-Compliant" = "true"
   })

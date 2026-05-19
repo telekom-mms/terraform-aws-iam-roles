@@ -71,8 +71,10 @@ This module centralizes the creation of commonly used IAM roles (EC2, Lambda, RD
 module "iam_roles" {
   source = "./terraform-aws-iam-roles"
 
-  name_prefix = "myapp-prod"
-  
+  project_name = "myapp"
+  environment  = "prod"
+  name_prefix  = "myapp-prod"
+
   create_ec2_role      = true
   create_s3_app_policy = true
   s3_bucket_arn        = "arn:aws:s3:::myapp-data"
@@ -86,12 +88,14 @@ module "iam_roles" {
 module "cross_account" {
   source = "./terraform-aws-iam-roles"
 
-  name_prefix = "auditor"
-  
+  project_name = "audit"
+  environment  = "prod"
+  name_prefix  = "auditor"
+
   create_cross_account_role = true
   trusted_account_arns      = ["arn:aws:iam::123456789012:root"]
   external_id               = "Company-Audit-2024"
-  
+
   permissions_boundary = "arn:aws:iam::account:policy/GlobalGuardrail"
 }
 ```

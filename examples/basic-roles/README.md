@@ -15,7 +15,7 @@ This example demonstrates how to use the AWS IAM Roles module to create various 
 
 1.  Copy this example to your project.
 2.  Update `variables.tf` with your specific values.
-3.  **Important**: Before applying, ensure you replace `your-s3-bucket-name`, `your-trusted-account-id`, and `your-external-id` in `main.tf` with actual values.
+3.  **Important**: Before applying, ensure you replace `arn:aws:s3:::your-s3-bucket-name`, `arn:aws:iam::123456789012:root`, and `your-external-id` in `main.tf` with actual values.
 4.  Initialize and apply:
     ```bash
     terraform init
